@@ -1,4 +1,4 @@
-name: Build-Windows-RDP
+name: Build-Windows-RDP-NGROK
 
 on:
   workflow_dispatch:
@@ -15,12 +15,14 @@ jobs:
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
         Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "admin@123" -Force)
 
-    - name: Download and Run Playit Tunnel
+    - name: Download and Run ngrok Tunnel
       env:
-        PLAYIT_SECRET: ${{ secrets.PL }}
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
       run: |
-        Invoke-WebRequest -Uri "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-windows-x86_64-signed.exe" -OutFile "playit.exe"
-        Start-Process -FilePath ".\playit.exe" -ArgumentList "--secret $env:PLAYIT_SECRET" -NoNewWindow
+        Invoke-WebRequest -Uri "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip" -OutFile "ngrok.zip"
+        Expand-Archive ngrok.zip
+        .\ngrok\ngrok.exe config add-authtoken $env:NGROK_AUTH_TOKEN
+        .\ngrok\ngrok.exe tcp 3389
 
     - name: Keep Machine Alive
       run: Start-Sleep -Seconds 21000
